@@ -1,0 +1,49 @@
+import numpy as np
+import os 
+import pandas as pd
+
+def get_transformation_dict_from_vesper_output(vesper_output_filename):
+    with open(vesper_output_filename) as f:
+        text = f.read()
+    text_chunks = text.split('#')[-11:]
+    model0_info = text_chunks[0][2:]
+    #print(model0_info)
+
+    locs = [i for i in range(len(model0_info)) if model0_info[i] == '=']
+    #print(locs)
+    
+    model0_dict = {}
+    model0_keys = []
+    model0_values = []
+    
+    for idx,loc in enumerate(locs):
+        if idx == 0:
+            model0_keys.append(model0_info[:loc])
+            value_string = model0_info[loc:locs[idx+1]].strip('=')
+            value_string2 = value_string.replace('\n', ' ').split(' ')[:-1]
+            model0_values.append(' '.join(value_string2).replace(' ', ','))
+        elif idx == len(locs)-1:
+            key_string = model0_info[locs[idx-1]:loc].strip('=')
+            key_string2 = key_string.replace('\n', ' ').split(' ')
+            model0_keys.append(key_string2.pop(-1))
+
+            value_string = model0_info[loc:].strip('=')
+            value_string2 = value_string.replace('\n', ' ').strip(' ')
+            model0_values.append(value_string2)
+        else:
+            key_string = model0_info[locs[idx-1]:loc].strip('=')
+            key_string2 = key_string.replace('\n', ' ').split(' ')
+            model0_keys.append(key_string2.pop(-1))
+
+            value_string = model0_info[loc:locs[idx+1]].strip('=')
+            value_string2 = value_string.replace('\n', ' ').split(' ')[:-1]
+            value_string3 = ' '.join(value_string2).replace(' ', ',')
+            if value_string3[0] == ',':
+                model0_values.append(value_string3[1:])
+            else:
+                model0_values.append(value_string3)
+
+    for idx,key in enumerate(model0_keys):
+        model0_dict[key] = model0_values[idx]
+    
+    return model0_dict
